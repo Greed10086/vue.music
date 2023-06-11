@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-cn">
 
 <head>
   <meta charset="utf-8">
@@ -52,8 +52,9 @@
     // 手动打开音频内容
 
     document.documentElement.addEventListener('mousedown', () => {
-      if (Tone.context.state !== 'running')
+      if (Tone.context.state !== 'running') {
         Tone.context.resume();
+      }
     });
     function notuser() {
       alert("以下内容为已登录用户专属，请先登录！");

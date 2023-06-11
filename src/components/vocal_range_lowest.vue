@@ -182,16 +182,16 @@ export default {
         function getPitch() {
             pitch.getPitch(function (err, frequency) {
                 if (frequency && current_note) {
-                    midiNum = freqToMidi(frequency);
+                    let midiNum = freqToMidi(frequency);
                     if (isHigh & midiNum >= highestNote) {
-                        current = Tonal.Midi.midiToNoteName(midiNum)
+                        let current = Tonal.Midi.midiToNoteName(midiNum)
                         highestNote = midiNum;
-                        select('#currentNote').html(current);
+                        $('#currentNote').html(current);
                     }
                     if (!isHigh && midiNum <= lowestNote && midiNum >= (lowestNote - 4)) { // disregarding background noise which is usually very low pitched
-                        current = Tonal.Midi.midiToNoteName(midiNum)
+                        let current = Tonal.Midi.midiToNoteName(midiNum)
                         lowestNote = midiNum;
-                        select('#currentNote').html(current);
+                        $('#currentNote').html(current);
                     }
                     if (prev) {
                         var row = getSequencerRow(frequency)

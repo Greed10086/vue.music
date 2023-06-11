@@ -209,9 +209,9 @@ export default {
         function getPitch() {
             pitch.getPitch(function (err, frequency) {
                 if (frequency && current_note) {
-                    midiNum = freqToMidi(frequency);
-                    current = Tonal.Midi.midiToNoteName(midiNum)
-                    select(`#${current_tab}-currentNote`).html(current);
+                    let midiNum = freqToMidi(frequency);
+                    let current = Tonal.Midi.midiToNoteName(midiNum)
+                    $(`#${current_tab}-currentNote`).html(current);
                     if (prev) {
                         var row = sequencer.getSequencerRow(frequency)
                         if (prev[0] == current_col) {

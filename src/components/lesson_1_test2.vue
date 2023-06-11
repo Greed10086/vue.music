@@ -320,8 +320,8 @@ export default {
         function getPitch() {
             pitch.getPitch(function (err, frequency) {
                 if (frequency && current_note) {
-                    midiNum = Tonal.Midi.freqToMidi(frequency);
-                    current = Tonal.Midi.midiToNoteName(midiNum)
+                    let midiNum = Tonal.Midi.freqToMidi(frequency);
+                    let current = Tonal.Midi.midiToNoteName(midiNum)
                     if (prev) {
                         var row = sequencer.getSequencerRow(frequency)
                         if (prev[0] == current_col) {
@@ -333,7 +333,7 @@ export default {
                             if (Math.round(midiNum) == current_note.pitch && !detected) {
                                 detected = true;
                                 score += 1;
-                                select(score_label()).html(score);
+                                $(score_label()).html(score);
                             }
                         }
                     }

@@ -265,7 +265,7 @@ export default {
         };
 
         document.getElementById("practice").onclick = () => {
-            ;
+            //;
             current_tab = "test1";
             startPractice("test1")
         }
@@ -339,7 +339,8 @@ export default {
                             if (Math.round(midiNum) == current_note.pitch && !detected) {
                                 detected = true;
                                 score += 1;
-                                select(score_label()).html(score);
+                                $('#test1-score').html(score);
+                                // select(score_label()).html(score);
                             }
                         }
                     }
