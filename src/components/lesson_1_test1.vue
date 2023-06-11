@@ -15,7 +15,7 @@
             <h6>第三节—C、D、E调进阶</h6>
         </a>
     </div>
-    <div id="test1" style="width: 70%;margin-left: 18%;" class="col s12">
+    <div id="test1" style="    width: 1063.44px; margin-left: 273.45px;" class="col s12">
 
         <h1>第一节——音域自测</h1>
         <hr />

@@ -158,9 +158,9 @@ h2 {
 .container {
     background-image: linear-gradient(to top, #fff1eb 0%, #ace0f9 100%);
     position: relative;
-    width: 50%;
-    margin-top: 2%;
-    margin-left: 25%;
+    width: 768px;
+    margin-top: 30.712px;
+    margin-left: 379.8px;
     height: 580px;
     /* background-color: white; */
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2);

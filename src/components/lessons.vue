@@ -1,7 +1,7 @@
 <template>
     <button class="menu-toggle" id="toggle-sidebar"></button>
-    <span style="position: fixed;left: 80px;top: 71px;"> ⬅ </span>
-    <p style="position: fixed;left: 111px;top: 71px;">此处有侧边栏</p>
+    <span style="left: 80px;top: 71px;position: absolute;"> ⬅ </span>
+    <p style="left: 111px;top: 71px;position: absolute;">此处有侧边栏</p>
     <div id="sidebar">
         <br />
         <hr />
@@ -39,7 +39,7 @@
             </ul>
         </div>
     </div>
-    <div style="text-align: center;margin-top: 3.4%;">
+    <div style="display: flex; justify-content: center;width: 1536px;">
         <div id="btn-left" class="arrow-left"></div>
         <router-link class="btn-grad isSelected" :to="this.id">进入章节</router-link>
         <div id="btn-right" class="arrow-right"></div>
@@ -349,10 +349,9 @@ export default {
 
 #sidebar {
     position: absolute;
-    top: 9vh;
     left: -250px;
     width: 250px;
-    height: 75%;
+    height: 500px;
     background-image: linear-gradient(to top, #a8edea 0%, #fed6e3 100%);
     transition: all 0.3s ease-in-out;
     /* 添加过渡效果以平滑切换 */
@@ -389,8 +388,9 @@ li {
 }
 
 .lunbo {
-    width: 100%;
-    margin-top: 6%;
+    width: 1536px;
+    margin-top: 91.15px;
+    height: 358px;
 }
 
 .content {
@@ -422,22 +422,16 @@ img {
 }
 
 #btn-left {
-    padding-top: 10px;
+    padding-top: 50px;
     padding-left: 10px;
     z-index: 10;
-    position: absolute;
-    left: 38%;
-    top: 80%;
     transform: translateY(-60%);
 }
 
 
 #btn-right {
-    padding-top: 10px;
+    padding-top: 50px;
     z-index: 10;
-    right: 38%;
-    top: 80%;
-    position: absolute;
     transform: translateY(-60%);
 }
 
@@ -476,7 +470,6 @@ img {
     color: white;
     box-shadow: 0 0 20px #eee;
     border-radius: 10px;
-    /* display: block; */
 }
 
 .btn-grad:hover {
@@ -490,7 +483,7 @@ img {
     width: 90px;
     height: 59px;
     /* margin: 300px auto; */
-    display: flex;
+    display: inline-flex;
 }
 
 .arrow-left::before,
@@ -510,7 +503,7 @@ img {
     width: 90px;
     height: 59px;
     /* margin: 300px auto; */
-    display: flex;
+    display: inline-flex;
 }
 
 .arrow-right::before,

@@ -1,8 +1,7 @@
 <template>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary"
-        style="background-color: #f3f3f3cc;  height: 9vh; line-height: 9vh;">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary" style="background-color: #f3f3f3cc;">
         <div class="container-fluid">
-            <img src="../assets/muses.png" alt="muses" style="width: 120px;margin: 0 20px;" height="24">
+            <img src="../assets/muses.png" alt="muses" style="width: 120px;margin: 0 20px;height=24px;">
             <div class="collapse navbar-collapse" id="navbarSupportedContent" style="font-size: 21px;">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item" style="padding: 0 10px;">
@@ -15,8 +14,8 @@
                         <router-link to="/vedio" class="nav-link">视频教学</router-link>
                     </li>
                 </ul>
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item" style="margin-left: 600px;padding: 0px 10px;">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 right">
+                    <li class="nav-item" style="padding: 0 10px;">
                         <router-link to="/login" class="nav-link" aria-current="page">登录</router-link>
                     </li>
                     <li class="nav-item" style="padding: 0 10px;">
@@ -35,6 +34,11 @@ export default {
 </script>
   
 <style lang="css">
+.right {
+    justify-content: flex-end;
+    flex-grow: 0.7;
+}
+
 #ul1 {
     display: block;
     margin: 0;

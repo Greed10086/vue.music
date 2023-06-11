@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    <div class="container" style="width: 1536px;">
 
         <!-- login -->
         <div class="form-container sign-in-container">

@@ -16,7 +16,7 @@
         </a>
     </div>
 
-    <div id="test5" style="width: 70%;margin-left: 18%;" class="col s12">
+    <div id="test5" style="    width: 1063.44px; margin-left: 273.45px;" class="col s12">
         <h1>第三节—C、D、E调进阶</h1>
         <hr />
         <p style="font-family: 'STKaiti', sans-serif;">
