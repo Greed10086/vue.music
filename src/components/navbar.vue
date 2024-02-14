@@ -11,7 +11,7 @@
                         <router-link to="/lessons" class="nav-link">训练章节</router-link>
                     </li>
                     <li class="nav-item" style="padding: 0 10px;">
-                        <router-link to="/vedio" class="nav-link">视频教学</router-link>
+                        <router-link to="/video" class="nav-link">视频教学</router-link>
                     </li>
                 </ul>
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 right">

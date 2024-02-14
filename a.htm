@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实时音调分析</title>
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.26"></script>
+</head>
+<body>
+  <button id="startRecording">开始录音</button>
+  <button id="stopRecording" disabled>停止录音</button>
+  <div>
+    <strong>音调：</strong> <span id="pitchResult"></span>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const startRecordingBtn = document.getElementById('startRecording');
+      const stopRecordingBtn = document.getElementById('stopRecording');
+      const pitchResult = document.getElementById('pitchResult');
+
+      let mediaRecorder;
+      let audioChunks = [];
+      let audioContext;
+      let analyser;
+      let bufferLength;
+      let dataArray;
+      let updateTimeout;
+      
+      // 添加缺失的变量
+      let pitchSum = 0;
+      let pitchCount = 0;
+
+      // 在全局定义 sampleRate 和 fftSize
+      let sampleRate;
+      let fftSize;
+
+      startRecordingBtn.addEventListener('click', startRecording);
+      stopRecordingBtn.addEventListener('click', stopRecording);
+
+      function startRecording() {
+        startRecordingBtn.disabled = true;
+        stopRecordingBtn.disabled = false;
+        audioChunks = [];
+        pitchSum = 0;
+        pitchCount = 0;
+
+        // 在 startRecording 函数内部添加以下代码
+        updateTimeout = setInterval(analyzePitch, 1); 
+
+        function analyzePitch() {
+          // 在 analyzePitch 函数内部添加检查是否有有效 dataArray
+          if (!dataArray) {
+            console.error('No dataArray available');
+            return;
+          }
+
+          analyser.getByteFrequencyData(dataArray);
+
+          const pitch = getPitch(dataArray);
+          pitchSum += pitch;
+          pitchCount++;
+
+          // 在这里添加一个条件，以确保每100ms计算一次平均音调
+          if (pitchCount === 100) {
+            const averagePitch = pitchSum / pitchCount;
+            pitchResult.textContent = mapToPitchRange(averagePitch.toFixed(2));
+            pitchSum = 0;
+            pitchCount = 0;
+          }
+        }
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then((stream) => {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048; // 设置 FFT 大小
+            bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength); // 设置 dataArray
+
+            // 保存 sampleRate 和 fftSize
+            sampleRate = audioContext.sampleRate;
+            fftSize = analyser.fftSize;
+
+            const microphone = audioContext.createMediaStreamSource(stream);
+
+            microphone.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data.size > 0) {
+                audioChunks.push(event.data);
+              }
+            };
+
+            mediaRecorder.onstop = () => {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const audioUrl = URL.createObjectURL(audioBlob);
+
+              const audioElement = new Audio(audioUrl);
+              audioElement.controls = true;
+              document.body.appendChild(audioElement);
+
+              analyser.disconnect();
+
+              analyzePitch();
+            };
+
+            mediaRecorder.start();
+          })
+          .catch((error) => {
+            console.error('Error accessing microphone:', error);
+          });
+      }
+
+      function stopRecording() {
+        startRecordingBtn.disabled = false;
+        stopRecordingBtn.disabled = true;
+        mediaRecorder.stop();
+        clearInterval(updateTimeout);
+      }
+
+      function getPitch(dataArray) {
+        const validValues = getValidValues(dataArray);
+
+        // 计算有效数字的平均值
+        const sum = validValues.reduce((acc, val) => acc + val, 0);
+        const average = sum / validValues.length;
+
+        // 确保 average 不为 NaN 或 Infinity，并且分母不为零
+        if (!isNaN(average) && isFinite(average) && validValues.length !== 0) {
+          const frequency = average * audioContext.sampleRate / analyser.fftSize;
+          return frequency;
+        } else {
+          console.error('Invalid average:', average);
+          return 0; // 默认返回0
+        }
+      }
+
+      function getValidValues(dataArray) {
+        const validValues = [];
+
+        // 遍历 dataArray 获取有效数字
+        for (let i = 0; i < dataArray.length; i++) {
+          const val = dataArray[i];
+          if (typeof val === 'number' && !isNaN(val) && isFinite(val)) {
+            validValues.push(val);
+          } else {
+            console.error('Invalid value at index', i, ':', val);
+          }
+        }
+
+        return validValues;
+      }
+
+      function mapToPitchRange(pitch) {
+  // 定义音调范围
+  const pitchRange = ['Ab4', 'G4', 'Gb4', 'F4', 'E4', 'Eb4', 'D4', 'Db4', 'C4', 'B3', 'Bb3', 'A3', 'Ab3'];
+
+  // 获取 pitch 的 MIDI 值
+  const pitchMidi = Tone.Frequency(pitch).toMidi();
+
+  // 阈值范围
+  const threshold = 1;
+  console.log(pitchMidi)
+  if(pitchMidi < Tone.Frequency(pitchRange[pitchRange.length - 1]).toMidi()){
+        return 'low'
+      }
+   if(pitchMidi > Tone.Frequency(pitchRange[0]).toMidi()){
+        return 'high'
+      }
+
+  // 根据 pitchRange 映射到指定范围的音符
+  for (let i = 0; i < pitchRange.length; i++) {
+    const rangeMidi = Tone.Frequency(pitchRange[i]).toMidi();
+    if (pitchMidi - rangeMidi < threshold&&pitchMidi - rangeMidi>=0) {
+        return pitchRange[i];
+    }    
+  }
+
+}
+    });
+  </script>
+</body>
+</html>
+
+
+

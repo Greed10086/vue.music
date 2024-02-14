@@ -5,6 +5,9 @@ const { defineConfig } = require('@vue/cli-service')
 // const { ElementPlusResolver } = require('unplugin-vue-components/resolvers')
 
 module.exports = defineConfig({
+  publicPath: process.env.NODE_ENV === 'production'
+    ? '/VUE.MUSIC/'  // Adjust this to the correct path
+    : '/',
   transpileDependencies: true,
   devServer: {
     port: 80,

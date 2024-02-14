@@ -23,13 +23,13 @@
             <h2 class="title">{{ title }}</h2>
             <ul id="item">
                 <li class="item active">
-                    <a href="/lesson_1/test1" style="padding: 0;"><img src="../assets/test1.png"></a>
+                    <a href="/#/lesson_1/test1" style="padding: 0;"><img src="../assets/test1.png"></a>
                 </li>
                 <li class="item">
-                    <a href="/lesson_1/test2" style="padding: 0;"><img src="../assets/test2.png"></a>
+                    <a href="/#/lesson_1/test2" style="padding: 0;"><img src="../assets/test2.png"></a>
                 </li>
                 <li class="item">
-                    <a href="/lesson_1/test3" style="padding: 0;"><img src="../assets/test3.png"></a>
+                    <a href="/#/lesson_1/test3" style="padding: 0;"><img src="../assets/test3.png"></a>
                 </li>
             </ul>
             <ul id="circle">
@@ -138,18 +138,31 @@ export default {
         var content = document.querySelector('.content');
         var index = 0;
         var timer = null;
-        //清除class
-        var clearclass = function () {
+        
+                //清除class
+                var clearclass = function () {
             for (let i = 0; i < items.length; i++) {
                 items[i].className = "item";
                 circles[i].className = "circle";
-                circles[i].setAttribute("num", i);
             }
         }
+        move();
+        //点击圆点时，跳转到对应图片
+        for (let j = 0; j < circles.length; j++) {
+            circles[j].setAttribute("num", j);
+            circles[j].addEventListener("click", function () {
+                var point_index = this.getAttribute("num");
+                index = Number(point_index);
+                move();
+            })
+
+        }
+
+
         /*只显示一个class*/
         function move() {
             clearclass();
-            console.log(index);
+            console.log(index+1);
             that.id = "/lesson_1/test" + (index + 1);
             switch (index + 1) {
                 case 1:
@@ -217,25 +230,7 @@ export default {
             }
             move();
         }, 8000)
-        //点击圆点时，跳转到对应图片
-        for (var j = 0; j < circles.length; j++) {
-            // clearInterval(timer);
-            // timer = setInterval(function () {
-            //     if (index < items.length - 1) {
-            //         index++;
-            //     }
-            //     else {
-            //         index = 0;
-            //     }
-            //     move();
-            // }, 8000)
-            circles[j].addEventListener("click", function () {
-                var point_index = this.getAttribute("num");
-                index = point_index;
-                move();
-            })
 
-        }
         //鼠标移入清除定时器，并开启一个三秒的定时器，使慢慢转动
         content.onmouseover = function () {
             clearInterval(timer);
@@ -408,13 +403,13 @@ li {
 
 .item {
     position: absolute;
-    opacity: 0;
+    display: none;
     transition: all 0.5s;
 
 }
 
 .item.active {
-    opacity: 1;
+    display: block;
 }
 
 img {

@@ -20,7 +20,7 @@
         </div>
         <h1></h1>
         <router-link data-title="确定音域" class="special_button" to="/vocal_range/instruction"></router-link>
-        <router-link data-title="视频教学" class="special_button" to="/vedio"></router-link>
+        <router-link data-title="视频教学" class="special_button" to="/video"></router-link>
         <router-link data-title="最终测试" class="special_button" to="/test_1/test"></router-link>
     </div>
 </template>

@@ -65,6 +65,26 @@ export default {
         let isHigh = false;
         var title = document.getElementById('vocal-range-title').innerHTML;
         console.log(title);
+
+        let mediaRecorder;
+      let audioChunks = [];
+      let audioContext;
+      let analyser;
+      let bufferLength;
+      let dataArray;
+      let updateTimeout;
+      
+// 保存当前音频元素的引用
+let currentAudioElement = null;
+
+      // 添加缺失的变量
+      let pitchSum = 0;
+      let pitchCount = 0;
+
+      // 在全局定义 sampleRate 和 fftSize
+      let sampleRate;
+      let fftSize;
+
         if (title.includes('highest')) {
             console.log("On highest pitch page")
             isHigh = true;
@@ -111,7 +131,7 @@ export default {
                 console.log("Going to results page")
                 localStorage.setItem("highestNote", highestNote);
                 document.getElementById("vocal-range-results").innerHTML =
-                    `Your vocal range is ${Tonal.Midi.midiToNoteName(lowestNote)} - ${Tonal.Midi.midiToNoteName(highestNote)}`;
+                    `你的音域是 ${Tonal.Midi.midiToNoteName(lowestNote)} - ${Tonal.Midi.midiToNoteName(highestNote)}`;
             } else {
                 isHigh = true;
             }
@@ -126,7 +146,7 @@ export default {
             let row;//add let
             if (isHigh) { row = sequencerRowsHigh.length - 1; }
             else { row = 0; }
-            setup();
+            startRecording();
             vizPlayer = new mm.Player(false, {
                 run: (note) => {
                     current_col = 0;
@@ -152,6 +172,7 @@ export default {
                 },
                 stop: () => {
                     sequencerStop();
+                    stopRecording();
                     pitchResult();
                 }
             });
@@ -159,58 +180,231 @@ export default {
             vizPlayer.start(notes);
         };
 
-        // Pitch Detection
-        let audioContext;
-        let mic;
-        let pitch;
-        let stream;
+        function startRecording() {
+        audioChunks = [];
+        pitchSum = 0;
+        pitchCount = 0;
 
-        async function setup() {
-            audioContext = new AudioContext();
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            startPitch(stream, audioContext);
-        }
+        // 在 startRecording 函数内部添加以下代码
+        updateTimeout = setInterval(analyzePitch, 1); 
 
-        function startPitch(stream, audioContext) {
-            pitch = ml5.pitchDetection('', audioContext, stream, modelLoaded);
-        }
+        function analyzePitch() {
+          // 在 analyzePitch 函数内部添加检查是否有有效 dataArray
+          if (!dataArray) {
+            console.error('No dataArray available');
+            return;
+          }
 
-        function modelLoaded() {
-            getPitch();
-        }
+          analyser.getByteFrequencyData(dataArray);
 
-        function getPitch() {
-            pitch.getPitch(function (err, frequency) {
-                if (frequency && current_note) {
-                    let midiNum = freqToMidi(frequency);
-                    if (isHigh & midiNum >= highestNote) {
-                        let current = Tonal.Midi.midiToNoteName(midiNum)
+          const pitch = getPitch(dataArray);
+          pitchSum += pitch;
+          pitchCount++;
+          // 在这里添加一个条件，以确保每100ms计算一次平均音调
+          if (pitchCount === 100) {
+        const averagePitch = pitchSum / pitchCount;
+
+               // 检查是否有错误，并且获取到了频率信息
+    if ( current_note) { 
+      // 将频率转换为 MIDI 数字
+      let midiNum = averagePitch.toFixed(2);
+      // 将 MIDI 数字转换为音符名
+      let current = mapToPitchRange(averagePitch.toFixed(2));
+       console.log(current)
+       if (isHigh & midiNum >= highestNote) {
                         highestNote = midiNum;
                         $('#currentNote').html(current);
                     }
-                    if (!isHigh && midiNum <= lowestNote && midiNum >= (lowestNote - 4)) { // disregarding background noise which is usually very low pitched
-                        let current = Tonal.Midi.midiToNoteName(midiNum)
+        if (!isHigh && midiNum <= lowestNote && midiNum >= (lowestNote - 4)) { // disregarding background noise which is usually very low pitched
                         lowestNote = midiNum;
                         $('#currentNote').html(current);
                     }
-                    if (prev) {
-                        var row = getSequencerRow(frequency)
-                        if (prev[0] == current_col) {
-                            setDetected(prev[0], prev[1], false)
-                        }
-                        if (row > 0) {
-                            setDetected(current_col, row, true);
-                        }
-                    }
-                    prev = [current_col, getSequencerRow(frequency)]
-                }
-                if (runPitch) getPitch();
-            })
+      // 如果前一个音符存在
+      if (prev) {
+        // 获取当前频率所在的行
+        var row = getSequencerRow(current);
+
+        // 如果前一个频率对应的列和当前列相同
+        if (prev[0] == current_col) {
+          // 取消前一个频率的检测状态
+          setDetected(prev[0], prev[1], false);
         }
+
+        // 如果当前频率在有效的行上
+        if (row > 0) {
+          // 设置当前频率的检测状态为 true
+          setDetected(current_col, row, true);
+          }
+        }
+      // 更新前一个频率的信息
+      prev = [current_col, getSequencerRow(current)];
+    }
+
+    // 如果标志 runPitch 为真，递归调用 getPitch 函数
+    // if (runPitch) getPitch();
+
+            pitchSum = 0;
+            pitchCount = 0;
+          }
+        }
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then((stream) => {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048; // 设置 FFT 大小
+            bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength); // 设置 dataArray
+
+            // 保存 sampleRate 和 fftSize
+            sampleRate = audioContext.sampleRate;
+            fftSize = analyser.fftSize;
+
+            const microphone = audioContext.createMediaStreamSource(stream);
+
+            microphone.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data.size > 0) {
+                audioChunks.push(event.data);
+              }
+            };
+
+            mediaRecorder.onstop = () => {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const audioUrl = URL.createObjectURL(audioBlob);
+
+              const audioElement = new Audio(audioUrl);
+              audioElement.controls = true;
+              
+              // 获取元素的引用
+const practiceButton = document.getElementById('practice');
+const scoreElement = document.getElementById('currentScore');
+
+
+    // 移除当前音频元素（如果存在）
+    if (currentAudioElement) {
+        currentAudioElement.parentNode.removeChild(currentAudioElement);
+    }
+
+      // 为新音频元素分配唯一的 ID
+      const newAudioId = 'unique_audio_id_' + Date.now();
+      audioElement.id = newAudioId;
+
+       // 设置样式
+       //audioElement.style.marginTop = '25px';
+       audioElement.style.marginLeft = '120px';
+       audioElement.style.verticalAlign = 'bottom';
+    // 插入到指定位置
+    practiceButton.insertAdjacentElement('afterend', audioElement);
+
+    // 更新当前音频元素的引用
+    currentAudioElement = audioElement;
+              analyser.disconnect();
+
+              analyzePitch();
+            };
+
+            mediaRecorder.start();
+          })
+          .catch((error) => {
+            console.error('Error accessing microphone:', error);
+          });
+        }
+
+      function stopRecording() {
+        mediaRecorder.stop();
+        if(updateTimeout) clearInterval(updateTimeout);
+      }
+
+      function getPitch(dataArray) {
+        const validValues = getValidValues(dataArray);
+
+        // 计算有效数字的平均值
+        const sum = validValues.reduce((acc, val) => acc + val, 0);
+        const average = sum / validValues.length;
+
+        // 确保 average 不为 NaN 或 Infinity，并且分母不为零
+        if (!isNaN(average) && isFinite(average) && validValues.length !== 0) {
+          const frequency = average * audioContext.sampleRate / analyser.fftSize;
+          return frequency;
+        } else {
+          console.error('Invalid average:', average);
+          return 0; // 默认返回0
+        }
+      }
+
+      function getValidValues(dataArray) {
+        const validValues = [];
+
+        // 遍历 dataArray 获取有效数字
+        for (let i = 0; i < dataArray.length; i++) {
+          const val = dataArray[i];
+          if (typeof val === 'number' && !isNaN(val) && isFinite(val)) {
+            validValues.push(val);
+          } else {
+            console.error('Invalid value at index', i, ':', val);
+          }
+        }
+
+        return validValues;
+      }
+
+      function mapToPitchRange(pitch) {
+     // 定义音调范围
+     const pitchRange = ['C4', 'B3', 'Bb3', 'A3', 'Ab3', 'G3', 'Gb3', 'F3', 'E3', 'Eb3', 'D3', 'Db3', 'C3', 'B2', 'Bb2', 'A2', 'Ab2', 'G2', 'Gb2', 'F2', 'E2', 'Eb2', 'D2', 'Db2', 'C2'];
+
+    // 获取 pitch 的 MIDI 值
+  const pitchMidi = Tone.Frequency(pitch).toMidi();
+
+  // 阈值范围
+  const threshold = 1;
+  if(pitchMidi < Tone.Frequency(pitchRange[pitchRange.length - 1]).toMidi()){
+        return 'Low'
+      }
+   if(pitchMidi > Tone.Frequency(pitchRange[0]).toMidi()){
+        return 'High'
+      }
+
+  // 根据 pitchRange 映射到指定范围的音符
+  for (let i = 0; i < pitchRange.length; i++) {
+    const rangeMidi = Tone.Frequency(pitchRange[i]).toMidi();
+    if (pitchMidi - rangeMidi < threshold&&pitchMidi - rangeMidi>=0) {
+        return pitchRange[i];
+    }    
+  }
+}
+function mapToPitchRange2(pitch) {
+     // 定义音调范围
+     const pitchRange = ['C4', 'B3', 'Bb3', 'A3', 'Ab3', 'G3', 'Gb3', 'F3', 'E3', 'Eb3', 'D3', 'Db3', 'C3', 'B2', 'Bb2', 'A2', 'Ab2', 'G2', 'Gb2', 'F2', 'E2', 'Eb2', 'D2', 'Db2', 'C2'];
+
+     // 获取 pitch 的 MIDI 值
+  const pitchMidi = pitch;
+  const threshold = 1;
+  if(pitchMidi < Tone.Frequency(pitchRange[pitchRange.length - 1]).toMidi()){
+        return 'Low'
+      }
+   if(pitchMidi > Tone.Frequency(pitchRange[0]).toMidi()){
+        return 'High'
+      }
+
+  // 根据 pitchRange 映射到指定范围的音符
+  for (let i = 0; i < pitchRange.length; i++) {
+    const rangeMidi = Tone.Frequency(pitchRange[i]).toMidi();
+    if (pitchMidi - rangeMidi < threshold&&pitchMidi - rangeMidi>=0) {
+        return pitchRange[i];
+    }    
+  }
+  }
 
         document.getElementById("stop").onclick = async () => {
             sequencerStop();
             vizPlayer.stop();
+            stopRecording();
             pitchResult();
         };
 
@@ -232,11 +426,13 @@ export default {
         }
 
         function getSequencerRow(freq) {
-            let midiNum = freqToMidi(freq);//let            
-            let current = Tonal.Midi.midiToNoteName(midiNum);//let
-            // console.log(`midi ${midiNum} note ${current} row ${sequencerRows.indexOf(current)} col ${current_col}`)
-            return sequencerRows.indexOf(current)
-        }
+                if(typeof freq === 'string'){
+                    return sequencerRows.indexOf(freq);
+                }
+                let midiNum = Tonal.Midi.freqToMidi(freq);
+                let current = Tonal.Midi.midiToNoteName(midiNum);
+                return sequencerRows.indexOf(current)
+            }
 
         function sequencerStop() {
             current_col = 0;
@@ -306,13 +502,12 @@ export default {
                 localStorage.setItem("lowestNote", lowestNote);
                 var nxt = document.getElementById("next-button");
                 if (nxt.style.display === "none") {
-                    nxt.style.display = "block";
+                    // nxt.style.display = "block";
                 }
             }
 
         }
         //  }
-
     }
 }
 </script>
